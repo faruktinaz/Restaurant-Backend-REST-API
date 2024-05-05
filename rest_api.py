@@ -86,7 +86,10 @@ class Handler(BaseHTTPRequestHandler):
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
     print(f"localhost / port = {PORT}")
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        server.shutdown()
     
 
 def read_menu(path):
