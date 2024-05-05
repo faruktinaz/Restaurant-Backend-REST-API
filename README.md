@@ -2,8 +2,7 @@
 ## Transparent Restaurant Backend
 
  Bu kısımda end pointleri kodlarken nasıl ilerlediğimi ve algoritmayı anlatıyor olacağım.
- 
----
+
 #### List Meals
 
 ```
