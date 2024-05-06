@@ -5,10 +5,8 @@ from urllib.parse import urlparse, parse_qs
 HOST = "localhost"
 PORT = 8080
 
-# List Meals TODO: list when vegan is true
 # TODO: Clean Code
 # split code into functions
-# ctrl + c handler
 
 # PATH: /getMeal
 # METHOD: GET
@@ -25,6 +23,28 @@ PORT = 8080
 #   ...
 
 
+def getMenu(filtered_menu, ingre, is_vegan):
+    vegetarian_menu = []
+    for meal in filtered_menu:
+        isMealVegetarian = True
+        for meal_ingredient in meal['ingredients']:
+            isMealVegatarian = False
+            for main_in in ingre:
+                if meal_ingredient['name'] == main_in['name']:
+                    if 'vegetarian' not in main_in['groups'] :
+                        isMealVegetarian = False
+                    else:
+                        isMealVegatarian = True
+                        if is_vegan and 'vegan' not in main_in['groups']:
+                            isMealVegatarian = False
+                    break
+            if not isMealVegatarian:
+                isMealVegetarian = False
+                break
+        if isMealVegetarian:
+            vegetarian_menu.append(meal)
+    return vegetarian_menu
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
@@ -36,22 +56,8 @@ class Handler(BaseHTTPRequestHandler):
             is_vegan = query_params.get('is_vegan', ['false'])[0].lower() == 'true'
             filtered_menu = menu['meals']
             ingre = menu['ingredients']
-
-            if is_vegetarian:
-                 vegetarian_menu = []
-                 for meal in filtered_menu:
-                     isMealVegatarian = False 
-                     for meal_ingredients in meal['ingredients']:
-                         for main_in in ingre:
-                             if meal_ingredients['name'] == main_in['name']:                                 
-                                 if 'vegetarian' in main_in['groups'] : isMealVegatarian = True
-                                 else:
-                                     isMealVegatarian = False
-                                     break
-                         if isMealVegatarian == False: break
-                     if isMealVegatarian:
-                         vegetarian_menu.append(meal)
-                 filtered_menu = vegetarian_menu
+            if (is_vegetarian or is_vegan):
+                filtered_menu = getMenu(filtered_menu, ingre, is_vegan)
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -75,13 +81,18 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(selected_meal, indent=2).encode())
-            
-        elif (parsed_path == "/quality"):
-            print('todo')
+
         else:
             self.send_response(404)
             self.end_headers()
             self.wfile.write(b'Something went wrong')
+
+    def do_POST(self):
+        print('test')
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        
 
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
