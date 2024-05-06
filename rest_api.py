@@ -41,13 +41,14 @@ def getMenu(filtered_menu, ingre, is_vegan):
             vegetarian_menu.append(meal)
     return vegetarian_menu
 
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
         parsed_path = urlparse(self.path)
         query_params = parse_qs(parsed_path.query)
 
-        if (parsed_path.path == '/listMeals'):
+        if (self.path == '/listMeals'):
             is_vegetarian = query_params.get('is_vegetarian', ['false'])[0].lower() == 'true'
             is_vegan = query_params.get('is_vegan', ['false'])[0].lower() == 'true'
             filtered_menu = menu['meals']
@@ -60,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(sorted(filtered_menu, key=lambda x: x['name']), indent=2).encode())
             
-        elif (parsed_path.path == '/getMeal'):
+        elif (self.path == '/getMeal'):
             meal_id = int(query_params.get('id', [0])[0])
             ingre = menu['ingredients']
             meals = menu['meals']
@@ -84,7 +85,20 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b'Something went wrong')
 
     def do_POST(self):
-        print('test')
+        menu = read_menu('data.json')
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length).decode('utf-8')
+        parsed_data = parse_qs(post_data)
+        data = {key: value[0] for key, value in parsed_data.items()}
+        
+        meal_id = int(parsed_data.get('meal_id')[0])
+        for meal in menu['meals']:
+            if meal['id'] == meal_id:
+                f_meal = meal
+        
+        print(f_meal)
+        # print("path", self.path)
+        # print("data = ", parsed_data, meal_id, data['garlic'])
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.end_headers()
