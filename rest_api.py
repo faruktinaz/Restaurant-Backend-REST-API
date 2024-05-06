@@ -28,18 +28,14 @@ def getMenu(filtered_menu, ingre, is_vegan):
     for meal in filtered_menu:
         isMealVegetarian = True
         for meal_ingredient in meal['ingredients']:
-            isMealVegatarian = False
             for main_in in ingre:
                 if meal_ingredient['name'] == main_in['name']:
-                    if 'vegetarian' not in main_in['groups'] :
+                    if 'vegetarian' not in main_in['groups'] or (is_vegan and 'vegan' not in main_in['groups']):
                         isMealVegetarian = False
                     else:
                         isMealVegatarian = True
-                        if is_vegan and 'vegan' not in main_in['groups']:
-                            isMealVegatarian = False
                     break
             if not isMealVegatarian:
-                isMealVegetarian = False
                 break
         if isMealVegetarian:
             vegetarian_menu.append(meal)
