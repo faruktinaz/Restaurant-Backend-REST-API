@@ -79,7 +79,11 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(sorted(filtered_menu, key=lambda x: x['name']), indent=2).encode())
             
         elif (parsed_path.path == '/getMeal'):
-            meal_id = int(query_params.get('id', [0])[0])
+            meal_id = int(query_params.get('id', [-1])[0])
+            if meal_id <= 0 or meal_id > len(menu['meals']):
+                sendStatus(self, b'Something went wrong: bad request: enter a valid id value 1-' +  
+                           str(len(menu['meals'])).encode('utf-8'), 400)
+                return
             ingre = menu['ingredients']
             selected_meal = []
 
@@ -109,7 +113,8 @@ class Handler(BaseHTTPRequestHandler):
             quality_score = 0
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
             if meal_id <= 0 or meal_id > len(menu['meals']):
-                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' + str(len(menu['meals'])).encode('utf-8'), 400)
+                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' +  
+                           str(len(menu['meals'])).encode('utf-8'), 400)
                 return
             f_meal = findMeal(menu, meal_id)
             for ingredients in f_meal['ingredients']:
@@ -136,7 +141,6 @@ def runServer():
         server.serve_forever()
     except KeyboardInterrupt:
         server.shutdown()
-    
 
 def read_menu(path):
      with open(path, "r") as file:
