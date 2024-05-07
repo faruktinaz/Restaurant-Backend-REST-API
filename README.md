@@ -3,6 +3,8 @@
 
  Bu kısımda end pointleri kodlarken nasıl ilerlediğimi ve algoritmayı anlatıyor olacağım.
 
+ Kullandigim ekran goruntuleri kodun guncel halini temsil etmeyebilir.
+
 #### List Meals
 
 ```
