@@ -54,6 +54,11 @@ class QualityEnum(Enum):
     medium = 3
     low = 1
 
+def sendStatus(Handler, message, status):
+	Handler.send_response(int(status))
+	Handler.end_headers()
+	Handler.wfile.write(message)
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
@@ -90,10 +95,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(selected_meal, indent=2).encode())
 
         else:
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b'Something went wrong')
-
+            sendStatus(self, b'Something went wrong', 404)
 
     def do_POST(self):
         menu = read_menu('data.json')
@@ -105,28 +107,26 @@ class Handler(BaseHTTPRequestHandler):
         
         if (parsed_path.path == '/quality'):
             quality_score = 0
-            meal_id = int(parsed_data.get('meal_id')[0])
+            meal_id = int(parsed_data.get('meal_id', [-1])[0])
+            if meal_id <= 0 or meal_id > len(menu['meals']):
+                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' + str(len(menu['meals'])).encode('utf-8'), 400)
+                return
             f_meal = findMeal(menu, meal_id)
             for ingredients in f_meal['ingredients']:
                 if ingredients['name'].lower() in data:
                     try:
                         quality_score += QualityEnum[data[ingredients['name'].lower()]].value
                     except:
-                        self.send_response(404)
-                        self.end_headers()
-                        self.wfile.write(b'Something went wrong high/medium/low')
+                        sendStatus(self, b'Something went wrong: bad request: you can only choose {high, medium, low}', 400)
                         break
                 else:
                     quality_score += 5
-			
-        
-        print(f_meal)
-        print('quality score is', quality_score)
-        # print("path", self.path)
-        # print("data = ", parsed_data, meal_id, data['garlic'])
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"quality": quality_score}, indent=2).encode())
+        else:
+            sendStatus(self, b'Something went wrong', 404)
         
 
 def runServer():
