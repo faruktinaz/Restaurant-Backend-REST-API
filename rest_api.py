@@ -1,6 +1,8 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from urllib.parse import urlparse, parse_qs
+from enum import Enum
+
 
 HOST = "localhost"
 PORT = 8080
@@ -45,6 +47,11 @@ def findMeal(menu, meal_id):
 	for meal in menu['meals']:
          if meal['id'] == meal_id:
              return meal
+
+class QualityEnum(Enum):
+    high = 5
+    medium = 3
+    low = 1
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -100,9 +107,16 @@ class Handler(BaseHTTPRequestHandler):
         f_meal = findMeal(menu, meal_id)
 
         for ingredients in f_meal['ingredients']:
-            if ingredients['name'] in data:
-                if data[ingredients['name']] == 'high':
-                    quality_score += 5
+            if ingredients['name'].lower() in data:
+                try:
+                    quality_score += QualityEnum[data[ingredients['name'].lower()]].value
+                except:
+                    self.send_response(404)
+                    self.end_headers()
+                    self.wfile.write(b'Something went wrong high/medium/low')
+                    break
+            else:
+                quality_score += 5
         
         print(f_meal)
         print('quality score is', quality_score)
