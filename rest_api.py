@@ -18,7 +18,6 @@ PORT = 8080
 #   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   ...
 
-
 # PATH: /price
 # METHOD: POST
 # PARAMS:
@@ -26,8 +25,6 @@ PORT = 8080
 #   <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   ...
-
-# parametreleri alirken hepsini kucuk koy dataya
 
 def getMenu(filtered_menu, ingre, is_vegan):
     v_menu = []
@@ -118,7 +115,7 @@ class Handler(BaseHTTPRequestHandler):
         meals_length = len(menu['meals'])
         post_data = self.rfile.read(content_length).decode('utf-8')
         parsed_data = parse_qs(post_data)
-        data = {key: value[0] for key, value in parsed_data.items()}
+        data = {key.lower(): value[0] for key, value in parsed_data.items()}
         
         if (parsed_path.path == '/quality'):
             quality_score = 0
@@ -137,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
                         break
                 else:
                     quality_score += 30
-            quality_score = quality_score / len(f_meal['ingredients'])
+            quality_score = quality_score // len(f_meal['ingredients'])
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -152,14 +149,13 @@ class Handler(BaseHTTPRequestHandler):
                 if (ingredients['name'].lower() in data):
                     for options in d_ingre['options']:
                         if options['quality'] == data[ingredients['name'].lower()]:
-                            price += (ingredients['quantity'] / 1000) * options['price'] 
+                            price += (ingredients['quantity'] / 1000) * options['price'] # error Chicken=qwe 
                 else:
                     price += (ingredients['quantity'] / 1000) * d_ingre['options'][0]['price']
-                    
-            print()
-            print(price)
-            print()
-            print()
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"price": price}, indent=2).encode())
         else:
             sendStatus(self, b'Something went wrong', 404)
         
