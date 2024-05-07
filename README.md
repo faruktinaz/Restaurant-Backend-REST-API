@@ -22,12 +22,7 @@ Eşleşen malzemeleri vegatarian_menu.append() kullanarak menüye ekleyip son du
 
 ![image](https://github.com/faruktinaz/otsimo-2024/assets/114104599/1d4ea13f-847c-4b2c-8dee-7c641f870f41)
 
-
-
-Python dilinde vejetaryan menu degerlendirmesi:
-
-![Screenshot from 2024-05-06 01-49-01](https://github.com/faruktinaz/otsimo-2024/assets/114104599/9fe638d5-2fc1-4aa2-9b9d-d6a8e15c76e0)
-
+![image](https://github.com/faruktinaz/otsimo-2024/assets/114104599/aed04629-1a32-48ec-bbe0-c75cf2ec7a5e)
 
 ---
 
