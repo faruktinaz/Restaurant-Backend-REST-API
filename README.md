@@ -40,7 +40,7 @@ Girilen ID numarasını öncelikle yemeklerin ID numaralarıyla eşleştirdim. A
 
 Şimdi ise yemeğin içerisinde bulunan malzemelerin opsiyonlarını yemeğin içerisine eklenmesi gerekiyor.
 
-Bunun için yemeğin içerisindeki malzemelerin tamamını, veri setimizden gelen malzemelerin isimleriyle karşılaştırdım. Eşleşen malzemeleri exists_ingrdts_it değişkenine iteratör kullanarak güncelledim, ve opsiyonları exists_ingrdts_it.update(ingredient) işlevini kullanarak güncelledim."
+Bunun için yemeğin içerisindeki malzemelerin tamamını, veri setimizden gelen malzemelerin isimleriyle karşılaştırdım. Eşleşen malzemeleri exists_ingrdts_it değişkenine iteratör kullanarak atadım, ve opsiyonları exists_ingrdts_it.update(ingredient) işlevini kullanarak üzerine ekledim."
 
 ![Screenshot from 2024-05-06 02-03-30](https://github.com/faruktinaz/otsimo-2024/assets/114104599/6f10c008-9f47-4456-a629-cf3ce4015909)
 
