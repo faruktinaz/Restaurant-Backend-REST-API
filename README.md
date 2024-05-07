@@ -77,3 +77,33 @@ low = 1
 
 Eğer yemeğin içerisindeki malzemenin isimi gelen post isteğindeki parametreler ile eşleşiyorsa, parametrenin değerini "QualityEnum" enum'u üzerinden "QualitiyEnum['name'].value()" özelliğini kullanarak qualitiy_score'a ekliyorum.  
 
+---
+
+### Price
+
+```
+PATH: /price
+METHOD: POST
+PARAMS:
+  meal_id: (integer, required)
+  <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
+  <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
+  ...
+```
+
+Bu kısımda yemeğin tüm malzemeleri fiyatlandıracağım için bir döngüye alarak başladım. 
+
+Sonrasında yemeğin içinde bulunan malzemeleri, veri setinden gelen ingredients'in içerisinde aradım.
+
+```python
+def findIngredient(menu, ingredient):
+	for d_ingre in menu['ingredients']:
+		if d_ingre['name'] == ingredient:
+			return d_ingre
+	return -1
+```
+
+
+Arama işlemini oluşturduğum findIngredient() fonkisyonunu kullanarak bir değişkene atadım. Bu sayede fiyatı hesaplayabilmem için gerekli çoğu veriye eriştim.
+
+Son olarak, API isteğinde gelen parametreler arasında malzemenin varlığını kontrol ettim. Varsa, malzemenin options['quality']'den gelen veriyi girilen parametrenin kalitesiyle karşılaştırdım ve fiyatlandırdım. Yoksa, default olarak 'high' fiyatlandırmasını kullandım. 
