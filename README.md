@@ -20,7 +20,8 @@ Yemeğin içindeki malzemelerin her birini, menu['ingredients'] içindeki öğel
 
 Eşleşen malzemeleri vegatarian_menu.append() kullanarak menüye ekleyip son durumda filtered_menu'yu vegatarian menü'ye esitleyerek döndürdüm.
 
-![Screenshot from 2024-05-06 01-39-27](https://github.com/faruktinaz/otsimo-2024/assets/114104599/395d17fe-ce2f-4f83-84ab-310a3a703df2)
+![image](https://github.com/faruktinaz/otsimo-2024/assets/114104599/1d4ea13f-847c-4b2c-8dee-7c641f870f41)
+
 
 
 Python dilinde vejetaryan menu degerlendirmesi:
