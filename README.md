@@ -46,3 +46,34 @@ Bunun için yemeğin içerisindeki malzemelerin tamamını, veri setimizden gele
 
 
 ---
+
+#### Quality
+
+```
+PATH: /quality
+METHOD: POST
+PARAMS:
+  meal_id: (integer, required)
+  <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
+  <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
+  ...
+```
+
+Bu kısımda öncelikle gelen parametreleri düzgün bir şekilde almayı hedefledim. `self.rfile.read(content_length)` işlevini kullanarak parametreleri okudum.
+
+gelen parametrelerin her birini key-value olarak tutmak istedim. 
+
+Örnek:
+	data["chicken"] = "high"
+
+Bu sayede yemeğin malzemelerinin girilen parametrelerin içerisinde olup olmadığını kontrol ettim.
+
+```python
+class QualityEnum(Enum):
+high = 5
+medium = 3
+low = 1
+```
+
+Eğer yemeğin içerisindeki malzemenin isimi gelen post isteğindeki parametreler ile eşleşiyorsa, parametrenin değerini "QualityEnum" enum'u üzerinden "QualitiyEnum['name'].value()" özelliğini kullanarak qualitiy_score'a ekliyorum.  
+
