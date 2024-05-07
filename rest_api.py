@@ -27,6 +27,8 @@ PORT = 8080
 #   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   ...
 
+# parametreleri alirken hepsini kucuk koy dataya
+
 def getMenu(filtered_menu, ingre, is_vegan):
     v_menu = []
     for meal in filtered_menu:
@@ -54,6 +56,12 @@ class QualityEnum(Enum):
     high = 30
     medium = 20
     low = 10
+
+def findIngredient(menu, ingredient):
+    for d_ingre in menu['ingredients']:
+        if d_ingre['name'] == ingredient:
+            return d_ingre
+    return -1
 
 def sendStatus(Handler, message, status):
     Handler.send_response(status)
@@ -137,14 +145,24 @@ class Handler(BaseHTTPRequestHandler):
 
         elif (parsed_path.path == '/price'):
             price = 0;
-            # f_meal = findMeal(menu, meal_id)
-            # for ingredients in f_meal['ingredients']:
-            #     if (ingredients['name'].lower() in data):
-            print('todo')
+            meal_id = int(parsed_data.get('meal_id', [-1])[0])
+            f_meal = findMeal(menu, meal_id)
+            for ingredients in f_meal['ingredients']:
+                d_ingre = findIngredient(menu, ingredients['name'])
+                if (ingredients['name'].lower() in data):
+                    for options in d_ingre['options']:
+                        if options['quality'] == data[ingredients['name'].lower()]:
+                            price += (ingredients['quantity'] / 1000) * options['price'] 
+                else:
+                    price += (ingredients['quantity'] / 1000) * d_ingre['options'][0]['price']
+                    
+            print()
+            print(price)
+            print()
+            print()
         else:
             sendStatus(self, b'Something went wrong', 404)
         
-
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
     print(f"localhost / port = {PORT}")
@@ -159,3 +177,4 @@ def read_menu(path):
 
 if __name__ == "__main__":
 	runServer()
+ 
