@@ -11,6 +11,7 @@ PORT = 8080
 # split code into functions
 
 # PATH: /getMeal
+# TODO: id: N (integer, required) check
 # METHOD: GET
 # PARAMS:
 #     id: N (integer, required)
@@ -19,14 +20,14 @@ PORT = 8080
 # PATH: /quality
 # METHOD: POST
 # PARAMS:
-#   meal_id: (integer, required)
+#   meal_id: (integer, TODO: ->required)
 #   <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
 #   ...
 
 
 def getMenu(filtered_menu, ingre, is_vegan):
-    vegetarian_menu = []
+    v_menu = []
     for meal in filtered_menu:
         isMealVegetarian = True
         for meal_ingredient in meal['ingredients']:
@@ -40,8 +41,8 @@ def getMenu(filtered_menu, ingre, is_vegan):
             if not isMealVegatarian:
                 break
         if isMealVegetarian:
-            vegetarian_menu.append(meal)
-    return vegetarian_menu
+            v_menu.append(meal)
+    return v_menu
 
 def findMeal(menu, meal_id):
 	for meal in menu['meals']:
@@ -97,26 +98,27 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         menu = read_menu('data.json')
         content_length = int(self.headers['Content-Length'])
+        parsed_path = urlparse(self.path)
         post_data = self.rfile.read(content_length).decode('utf-8')
         parsed_data = parse_qs(post_data)
         data = {key: value[0] for key, value in parsed_data.items()}
         
-        quality_score = 0
-        
-        meal_id = int(parsed_data.get('meal_id')[0])
-        f_meal = findMeal(menu, meal_id)
-
-        for ingredients in f_meal['ingredients']:
-            if ingredients['name'].lower() in data:
-                try:
-                    quality_score += QualityEnum[data[ingredients['name'].lower()]].value
-                except:
-                    self.send_response(404)
-                    self.end_headers()
-                    self.wfile.write(b'Something went wrong high/medium/low')
-                    break
-            else:
-                quality_score += 5
+        if (parsed_path.path == '/quality'):
+            quality_score = 0
+            meal_id = int(parsed_data.get('meal_id')[0])
+            f_meal = findMeal(menu, meal_id)
+            for ingredients in f_meal['ingredients']:
+                if ingredients['name'].lower() in data:
+                    try:
+                        quality_score += QualityEnum[data[ingredients['name'].lower()]].value
+                    except:
+                        self.send_response(404)
+                        self.end_headers()
+                        self.wfile.write(b'Something went wrong high/medium/low')
+                        break
+                else:
+                    quality_score += 5
+			
         
         print(f_meal)
         print('quality score is', quality_score)
