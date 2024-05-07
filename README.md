@@ -5,7 +5,7 @@
 
  Kullandigim ekran goruntuleri kodun guncel halini temsil etmeyebilir.
 
-#### List Meals
+### List Meals
 
 ```
 PATH: /listMeals
@@ -26,7 +26,7 @@ Eşleşen malzemeleri vegatarian_menu.append() kullanarak menüye ekleyip son du
 
 ---
 
-#### Get Meal
+### Get Meal
 
 ```
 PATH: /getMeal
@@ -47,7 +47,7 @@ Bunun için yemeğin içerisindeki malzemelerin tamamını, veri setimizden gele
 
 ---
 
-#### Quality
+### Quality
 
 ```
 PATH: /quality
