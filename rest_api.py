@@ -53,6 +53,11 @@ class QualityEnum(Enum):
     high = 30
     medium = 20
     low = 10
+    
+class serviceFee(Enum):
+    high = 0.0
+    medium = 0.05
+    low = 0.10
 
 def findIngredient(menu, ingredient):
     for d_ingre in menu['ingredients']:
@@ -124,6 +129,7 @@ class Handler(BaseHTTPRequestHandler):
                 sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' +  
                            str(meals_length).encode(), 400)
                 return
+
             f_meal = findMeal(menu, meal_id)
             for ingredients in f_meal['ingredients']:
                 if (ingredients['name'].lower() in data):
@@ -133,7 +139,8 @@ class Handler(BaseHTTPRequestHandler):
                         sendStatus(self, b'Something went wrong: bad request: you can only choose {high, medium, low}', 400)
                         break
                 else:
-                    quality_score += 30
+                    quality_score += QualityEnum['high'].value
+
             quality_score = quality_score // len(f_meal['ingredients'])
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -146,12 +153,14 @@ class Handler(BaseHTTPRequestHandler):
             f_meal = findMeal(menu, meal_id)
             for ingredients in f_meal['ingredients']:
                 d_ingre = findIngredient(menu, ingredients['name'])
-                if (ingredients['name'].lower() in data):
+                if (ingredients['name'].lower() in data and \
+                    				data[ingredients['name'].lower()] in QualityEnum.__members__):
                     for options in d_ingre['options']:
-                        if options['quality'] == data[ingredients['name'].lower()]:
-                            price += (ingredients['quantity'] / 1000) * options['price'] # error Chicken=qwe 
+                        if (options['quality'] == data[ingredients['name'].lower()]):
+                            price += (ingredients['quantity'] / 1000) * options['price'] + serviceFee[options['quality']].value
                 else:
                     price += (ingredients['quantity'] / 1000) * d_ingre['options'][0]['price']
+
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
