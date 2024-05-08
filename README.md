@@ -121,4 +121,4 @@ medium = 0.05
 low = 0.10
 ```
 
-Bu sayede eşleşen malzemenin kalitesine göre, fiyata ek olarak `serviceFee[ingredient_qualitiy].value` kullanarak fiyata ekledim.
+Bu sayede eşleşen malzemenin kalitesine göre, fiyata ek olarak `serviceFee[ingredient_qualitiy].value` kullanarak ekledim.
