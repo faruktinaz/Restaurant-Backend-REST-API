@@ -64,13 +64,13 @@ Bu kısımda öncelikle gelen parametreleri düzgün bir şekilde almayı hedefl
 gelen parametrelerin her birini dictionary yapısına ekledim. 
 
 Örnek:
-	```python
-	data = {
-	  "chicken": "high",
-	  "garlic": "low",
-	  "rice": "medium"
-	}
- 	```
+```python
+data = {
+"chicken": "high",
+"garlic": "low",
+"rice": "medium"
+}
+```
 
 Bu sayede yemeğin malzemelerinin girilen parametrelerin içerisinde olup olmadığını kontrol ettim.
 
