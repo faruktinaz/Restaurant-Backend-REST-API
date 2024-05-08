@@ -61,10 +61,16 @@ PARAMS:
 
 Bu kısımda öncelikle gelen parametreleri düzgün bir şekilde almayı hedefledim. `self.rfile.read(content_length)` işlevini kullanarak parametreleri okudum.
 
-gelen parametrelerin her birini key-value olarak tutmak istedim. 
+gelen parametrelerin her birini dictionary yapısına ekledim. 
 
 Örnek:
-	`data["chicken"] = "high"`
+	```python
+	data = {
+	  "chicken": "high",
+	  "garlic": "low",
+	  "rice": "medium"
+	}
+ 	```
 
 Bu sayede yemeğin malzemelerinin girilen parametrelerin içerisinde olup olmadığını kontrol ettim.
 
