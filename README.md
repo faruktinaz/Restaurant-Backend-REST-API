@@ -1,7 +1,7 @@
 # otsimo-2024
 ## Transparent Restaurant Backend
 
- Bu kısımda end pointleri kodlarken nasıl ilerlediğimi ve algoritmayı anlatıyor olacağım.
+ Bu kısımda endpointleri kodlarken nasıl ilerlediğimi ve olusturdugum algoritmayi, fonksiyonlari anlatıyor olacağım.
 
  Kullandigim ekran goruntuleri kodun guncel halini temsil etmeyebilir.
 
@@ -16,7 +16,7 @@ PARAMS:
 SAMPLE: http://localhost:8080/listMeals?is_vegetarian=true
 ```
 
-Yemeğin içindeki malzemelerin her birini, menu['ingredients'] içindeki öğelerle isimlerine göre eşleştirerek, eşleşen malzemelerin ingredient['groups'] içinde vejetaryen veya vegan olup olmadığını kontrol etmem gerekiyor.
+Yemeğin içindeki malzemelerin her birini, `menu['ingredients']` içindeki öğelerle isimlerine göre eşleştirerek, eşleşen malzemelerin `ingredient['groups']` içinde vejetaryen veya vegan olup olmadığını kontrol etmem gerekiyor.
 
 Eşleşen malzemeleri vegatarian_menu.append() kullanarak menüye ekleyip son durumda filtered_menu'yu vegatarian menü'ye esitleyerek döndürdüm.
 
@@ -64,7 +64,7 @@ Bu kısımda öncelikle gelen parametreleri düzgün bir şekilde almayı hedefl
 gelen parametrelerin her birini key-value olarak tutmak istedim. 
 
 Örnek:
-	data["chicken"] = "high"
+	`data["chicken"] = "high"`
 
 Bu sayede yemeğin malzemelerinin girilen parametrelerin içerisinde olup olmadığını kontrol ettim.
 
@@ -75,7 +75,7 @@ medium = 3
 low = 1
 ```
 
-Eğer yemeğin içerisindeki malzemenin isimi gelen post isteğindeki parametreler ile eşleşiyorsa, parametrenin değerini "QualityEnum" enum'u üzerinden "QualitiyEnum['name'].value()" özelliğini kullanarak qualitiy_score'a ekliyorum.  
+Eğer yemeğin içerisindeki malzemenin isimi gelen post isteğindeki parametreler ile eşleşiyorsa, parametrenin değerini "QualityEnum" enum'u üzerinden `QualitiyEnum['name'].value()` özelliğini kullanarak qualitiy_score'a ekliyorum.  
 
 ---
 
@@ -104,6 +104,17 @@ def findIngredient(menu, ingredient):
 ```
 
 
-Arama işlemini oluşturduğum findIngredient() fonkisyonunu kullanarak bir değişkene atadım. Bu sayede fiyatı hesaplayabilmem için gerekli çoğu veriye eriştim.
+Arama işlemini oluşturduğum `findIngredient()` fonkisyonunu kullanarak bir değişkene atadım. Bu sayede fiyatı hesaplayabilmem için gerekli çoğu veriye eriştim.
 
-Son olarak, API isteğinde gelen parametreler arasında malzemenin varlığını kontrol ettim. Varsa, malzemenin options['quality']'den gelen veriyi girilen parametrenin kalitesiyle karşılaştırdım ve fiyatlandırdım. Yoksa, default olarak 'high' fiyatlandırmasını kullandım. 
+Son olarak, API isteğinde gelen parametreler arasında malzemenin varlığını kontrol ettim. Varsa, malzemenin `options['quality']` den gelen veriyi girilen parametrenin kalitesiyle karşılaştırdım ve fiyatlandırdım. Yoksa, default olarak 'high' fiyatlandırmasını kullandım. 
+
+Düşük kaliteli malzemeler seçildiğinde servis ücretini alabilmek için `serviceFee()` adinda bir enum oluşturdum.
+
+```python
+class serviceFee(Enum):
+high = 0.0
+medium = 0.05
+low = 0.10
+```
+
+Bu sayede eşleşen malzemenin kalitesine göre, fiyata ek olarak `serviceFee[ingredient_qualitiy].value` kullanarak fiyata ekledim.
