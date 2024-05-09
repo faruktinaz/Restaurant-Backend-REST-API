@@ -1,8 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from urllib.parse import urlparse, parse_qs
-from enum import Enum
 import random
+import math
+import enums
 
 
 HOST = "localhost"
@@ -50,16 +51,6 @@ def findMeal(menu, meal_id):
          if meal['id'] == meal_id:
              return meal
 
-class QualityEnum(Enum):
-    high = 30
-    medium = 20
-    low = 10
-    
-class serviceFee(Enum):
-    high = 0.0
-    medium = 0.05
-    low = 0.10
-
 def findIngredient(menu, ingredient):
     for d_ingre in menu['ingredients']:
         if d_ingre['name'] == ingredient:
@@ -69,7 +60,13 @@ def findIngredient(menu, ingredient):
 def sendStatus(Handler, message, status):
     Handler.send_response(status)
     Handler.end_headers()
-    message = json.dumps({"error": message.decode()}, indent=2).encode()
+    error_response = {
+		'error':{
+			'code': status,
+            'message': message.decode()
+		}
+	}
+    message = json.dumps(error_response, indent=2).encode()
     Handler.wfile.write(message)
 
 def calculateQuality(Handler, f_meal, data):
@@ -77,12 +74,12 @@ def calculateQuality(Handler, f_meal, data):
 	for ingredients in f_meal['ingredients']:
 		if (ingredients['name'].lower() in data):
 			try:
-				quality_score += QualityEnum[data[ingredients['name'].lower()]].value
+				quality_score += enums.QualityEnum[data[ingredients['name'].lower()]].value
 			except:
-				sendStatus(Handler, b'Something went wrong: bad request: you can only choose {high, medium, low}', 400)
+				sendStatus(Handler, b'You can only choose from {high, medium, low}.', 400)
 				return -1
 		else:
-			quality_score += QualityEnum['high'].value
+			quality_score += enums.QualityEnum['high'].value
 	return quality_score // len(f_meal['ingredients'])
 
 class Handler(BaseHTTPRequestHandler):
@@ -108,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
             length = len(menu['meals'])
             meal_id = int(query_params.get('id', [-1])[0])
             if (meal_id <= 0 or meal_id > length):
-                sendStatus(self, b'Something went wrong: bad request: enter a valid id value 1-' + str(length).encode(), 400)
+                sendStatus(self, b'"Invalid ID provided. Please provide a valid ID." 1-' + str(length).encode(), 400)
                 return
             ingre = menu['ingredients']
             selected_meal = []
@@ -125,7 +122,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(selected_meal, indent=2).encode())
 
         else:
-            sendStatus(self, b'Something went wrong', 404)
+            sendStatus(self, b'Path not found.', 404)
 
     def do_POST(self):
         menu = read_menu('data.json')
@@ -134,18 +131,18 @@ class Handler(BaseHTTPRequestHandler):
         meals_length = len(menu['meals'])
         post_data = self.rfile.read(content_length).decode('utf-8')
         parsed_data = parse_qs(post_data)
-        data = {key.lower(): value[0] for key, value in parsed_data.items()}
+        post_params = {key.lower(): value[0] for key, value in parsed_data.items()}
         
         if (parsed_path.path == '/quality'):
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
 
             if (meal_id <= 0 or meal_id > meals_length):
-                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' + \
+                sendStatus(self, b'Invalid ID provided. Please provide a valid meal ID. 1-' + \
                            		str(meals_length).encode(), 400)
                 return
 
             f_meal = findMeal(menu, meal_id)
-            quality_score = calculateQuality(self, f_meal, data)
+            quality_score = calculateQuality(self, f_meal, post_params)
             if (quality_score == -1):
                 return
 
@@ -159,14 +156,17 @@ class Handler(BaseHTTPRequestHandler):
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
             f_meal = findMeal(menu, meal_id)
             for ingredients in f_meal['ingredients']:
-                d_ingre = findIngredient(menu, ingredients['name'])
-                if (ingredients['name'].lower() in data and \
-                    				data[ingredients['name'].lower()] in QualityEnum.__members__):
-                    for options in d_ingre['options']:
-                        if (options['quality'] == data[ingredients['name'].lower()]):
-                            price += (ingredients['quantity'] / 1000) * options['price'] + serviceFee[options['quality']].value
+                data_ingredient = findIngredient(menu, ingredients['name'])
+                if (data_ingredient == -1):
+                    sendStatus(self, b'Ingredient information could not be found. ' + ingredient['name'].encode(), 404)
+                    return
+                if (ingredients['name'].lower() in post_params and \
+                    				post_params[ingredients['name'].lower()] in enums.QualityEnum.__members__):
+                    for options in data_ingredient['options']:
+                        if (options['quality'] == post_params[ingredients['name'].lower()]):
+                            price += (ingredients['quantity'] / 1000) * options['price'] + enums.serviceFee[options['quality']].value
                 else:
-                    price += (ingredients['quantity'] / 1000) * d_ingre['options'][0]['price']
+                    price += (ingredients['quantity'] / 1000) * data_ingredient['options'][0]['price']
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -174,25 +174,30 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"price": price}, indent=2).encode())
         
         elif (parsed_path.path == '/random'):
-            m_ignre = menu['ingredients']
             random_meal = random.choice(menu['meals'])
-            price = 0
             randQuality = 0
+            
+            price = 0
             for ingredient in random_meal['ingredients']:
                 data_ingredient = findIngredient(menu, ingredient['name'])
+                if (data_ingredient == -1):
+                    sendStatus(self, b'Ingredient information could not be found. ' + ingredient['name'].encode(), 404)
+                    return
                 random_option = random.choice(data_ingredient['options'])
-                price += (ingredient['quantity'] / 1000) * random_option['price'] + serviceFee[random_option['quality']].value
-                randQuality += QualityEnum[random_option['quality']].value // len(random_meal['ingredients'])
+                price += (ingredient['quantity'] / 1000) * random_option['price'] + enums.serviceFee[random_option['quality']].value
+                randQuality += enums.QualityEnum[random_option['quality']].value // len(random_meal['ingredients'])
                 print(random_option)
              
             print(random_meal)
             print()
             print()
-            print('price =', price)
-            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"price": price}, indent=2).encode())
         else:
-            sendStatus(self, b'Something went wrong', 404)
-        
+            sendStatus(self, b'Path not found.', 404)
+
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
     print(f"localhost / port = {PORT}")
