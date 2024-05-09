@@ -2,7 +2,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from urllib.parse import urlparse, parse_qs
 import random
-import math
 import enums
 
 
@@ -11,22 +10,6 @@ PORT = 8080
 
 # TODO: Clean Code, is data empty
 # split code into functions
-
-# PATH: /quality
-# METHOD: POST
-# PARAMS:
-#   meal_id: (integer, TODO: ->required)
-#   <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
-#   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
-#   ...
-
-# PATH: /price
-# METHOD: POST
-# PARAMS:
-#   meal_id: (integer, required)
-#   <ingredient-1>: (enum, values: ["high", "medium", "low"], optional) default="high"
-#   <ingredient-2>: (enum, values: ["high", "medium", "low"], optional) default="high"
-#   ...
 
 def getMenu(filtered_menu, ingre, is_vegan):
     v_menu = []
@@ -123,7 +106,7 @@ class Handler(BaseHTTPRequestHandler):
             length = len(menu['meals'])
             meal_id = int(query_params.get('id', [-1])[0])
             if (meal_id <= 0 or meal_id > length):
-                sendStatus(self, b'"Invalid ID provided. Please provide a valid ID." 1-' + str(length).encode(), 400)
+                sendStatus(self, b'Invalid ID provided. Please provide a valid ID. 1-' + str(length).encode(), 400)
                 return
             ingre = menu['ingredients']
             selected_meal = []
@@ -176,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
             for ingredients in f_meal['ingredients']:
                 data_ingredient = findIngredient(menu, ingredients['name'])
                 if (data_ingredient == -1):
-                    sendStatus(self, b'Ingredient information could not be found. ' + ingredient['name'].encode(), 404)
+                    sendStatus(self, b'Ingredient information could not be found. ' + ingredients['name'].encode(), 404)
                     return
                 if (ingredients['name'].lower() in post_params and \
                     				post_params[ingredients['name'].lower()] in enums.QualityEnum.__members__):
@@ -195,8 +178,11 @@ class Handler(BaseHTTPRequestHandler):
             budget = int(parsed_data.get('budget', [-1])[0])
             if budget > 0:
                 random_menu = filteredHighestMenu(menu, budget)
+            else:
+                random_menu = menu['meals']
             random_meal = random.choice(random_menu)
             random_quality = 0
+            random_ingredients = []
             
             price = 0
             for ingredient in random_meal['ingredients']:
@@ -205,19 +191,31 @@ class Handler(BaseHTTPRequestHandler):
                     sendStatus(self, b'Ingredient information could not be found. ' + ingredient['name'].encode(), 404)
                     return
                 random_option = random.choice(data_ingredient['options'])
+                random_ingredients.append(ingredientsJson(data_ingredient['name'], random_option))
                 price += (ingredient['quantity'] / 1000) * random_option['price'] + enums.serviceFee[random_option['quality']].value
                 random_quality += enums.QualityEnum[random_option['quality']].value
                 print(random_option)
-            random_quality = random_quality // len(random_meal['ingredients'])
-            print(random_meal)
-            print()
-            print()
+            quality_score = random_quality // len(random_meal['ingredients'])
+            result = {
+				'id': random_meal['id'],
+				'name': random_meal['name'],
+				'price': round(price, 2),
+				'quality_score': quality_score,
+				'ingredients': random_ingredients
+			}
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"price": price}, indent=2).encode())
+            self.wfile.write(json.dumps(result, indent=2).encode())
         else:
             sendStatus(self, b'Path not found.', 404)
+
+def ingredientsJson(name, option):
+    ingredient = {
+		'name': name,
+		'quality': option['quality']
+	}
+    return ingredient
 
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
