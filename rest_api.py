@@ -9,7 +9,7 @@ import enums
 HOST = "localhost"
 PORT = 8080
 
-# TODO: Clean Code
+# TODO: Clean Code, is data empty
 # split code into functions
 
 # PATH: /quality
@@ -68,6 +68,24 @@ def sendStatus(Handler, message, status):
 	}
     message = json.dumps(error_response, indent=2).encode()
     Handler.wfile.write(message)
+
+def calculatePriceRandom(menu, meal_ingredients, quality):
+	price = 0
+	for ingredient in meal_ingredients:
+		data_ingredient = findIngredient(menu, ingredient['name'])
+		if data_ingredient == -1:
+			continue
+		price += (ingredient['quantity'] / 1000) * data_ingredient['options'][quality]['price']
+	return price
+
+def filteredHighestMenu(menu, budget):
+    meals = menu['meals']
+    highest_meals = []
+    for meal in meals:
+        price = calculatePriceRandom(menu, meal['ingredients'], 0)
+        if price <= budget:
+            highest_meals.append(meal)
+    return(highest_meals)
 
 def calculateQuality(Handler, f_meal, data):
 	quality_score = 0
@@ -174,8 +192,11 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"price": price}, indent=2).encode())
         
         elif (parsed_path.path == '/random'):
-            random_meal = random.choice(menu['meals'])
-            randQuality = 0
+            budget = int(parsed_data.get('budget', [-1])[0])
+            if budget > 0:
+                random_menu = filteredHighestMenu(menu, budget)
+            random_meal = random.choice(random_menu)
+            random_quality = 0
             
             price = 0
             for ingredient in random_meal['ingredients']:
@@ -185,9 +206,9 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 random_option = random.choice(data_ingredient['options'])
                 price += (ingredient['quantity'] / 1000) * random_option['price'] + enums.serviceFee[random_option['quality']].value
-                randQuality += enums.QualityEnum[random_option['quality']].value // len(random_meal['ingredients'])
+                random_quality += enums.QualityEnum[random_option['quality']].value
                 print(random_option)
-             
+            random_quality = random_quality // len(random_meal['ingredients'])
             print(random_meal)
             print()
             print()
