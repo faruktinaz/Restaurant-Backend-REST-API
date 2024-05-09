@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from urllib.parse import urlparse, parse_qs
 from enum import Enum
+import random
 
 
 HOST = "localhost"
@@ -71,6 +72,19 @@ def sendStatus(Handler, message, status):
     message = json.dumps({"error": message.decode()}, indent=2).encode()
     Handler.wfile.write(message)
 
+def calculateQuality(Handler, f_meal, data):
+	quality_score = 0
+	for ingredients in f_meal['ingredients']:
+		if (ingredients['name'].lower() in data):
+			try:
+				quality_score += QualityEnum[data[ingredients['name'].lower()]].value
+			except:
+				sendStatus(Handler, b'Something went wrong: bad request: you can only choose {high, medium, low}', 400)
+				return -1
+		else:
+			quality_score += QualityEnum['high'].value
+	return quality_score // len(f_meal['ingredients'])
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
@@ -88,7 +102,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(sorted(filtered_menu, key=lambda x: x['name']), indent=2).encode())
+            self.wfile.write(json.dumps(sorted(filtered_menu, key=lambda x: x['name']), indent=2).encode()) # checkl
             
         elif (parsed_path.path == '/getMeal'):
             length = len(menu['meals'])
@@ -123,25 +137,18 @@ class Handler(BaseHTTPRequestHandler):
         data = {key.lower(): value[0] for key, value in parsed_data.items()}
         
         if (parsed_path.path == '/quality'):
-            quality_score = 0
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
+
             if (meal_id <= 0 or meal_id > meals_length):
-                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' +  
-                           str(meals_length).encode(), 400)
+                sendStatus(self, b'Something went wrong: bad request: enter a valid meal_id value 1-' + \
+                           		str(meals_length).encode(), 400)
                 return
 
             f_meal = findMeal(menu, meal_id)
-            for ingredients in f_meal['ingredients']:
-                if (ingredients['name'].lower() in data):
-                    try:
-                        quality_score += QualityEnum[data[ingredients['name'].lower()]].value
-                    except:
-                        sendStatus(self, b'Something went wrong: bad request: you can only choose {high, medium, low}', 400)
-                        break
-                else:
-                    quality_score += QualityEnum['high'].value
+            quality_score = calculateQuality(self, f_meal, data)
+            if (quality_score == -1):
+                return
 
-            quality_score = quality_score // len(f_meal['ingredients'])
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -165,6 +172,24 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({"price": price}, indent=2).encode())
+        
+        elif (parsed_path.path == '/random'):
+            m_ignre = menu['ingredients']
+            random_meal = random.choice(menu['meals'])
+            price = 0
+            randQuality = 0
+            for ingredient in random_meal['ingredients']:
+                data_ingredient = findIngredient(menu, ingredient['name'])
+                random_option = random.choice(data_ingredient['options'])
+                price += (ingredient['quantity'] / 1000) * random_option['price'] + serviceFee[random_option['quality']].value
+                randQuality += QualityEnum[random_option['quality']].value // len(random_meal['ingredients'])
+                print(random_option)
+             
+            print(random_meal)
+            print()
+            print()
+            print('price =', price)
+            
         else:
             sendStatus(self, b'Something went wrong', 404)
         
