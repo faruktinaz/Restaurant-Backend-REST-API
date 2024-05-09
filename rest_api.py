@@ -3,85 +3,12 @@ import json
 from urllib.parse import urlparse, parse_qs
 import random
 import enums
-
+import functions
 
 HOST = "localhost"
 PORT = 8080
 
-# TODO: Clean Code, is data empty
-# split code into functions
-
-def getMenu(filtered_menu, ingre, is_vegan):
-    v_menu = []
-    for meal in filtered_menu:
-        isMealVegetarian = True
-        for meal_ingredient in meal['ingredients']:
-            for main_in in ingre:
-                if meal_ingredient['name'] == main_in['name']:
-                    if 'vegetarian' not in main_in['groups'] or (is_vegan and 'vegan' not in main_in['groups']):
-                        isMealVegetarian = False
-                    else:
-                        isMealVegatarian = True
-                    break
-            if not isMealVegatarian:
-                break
-        if isMealVegetarian:
-            v_menu.append(meal)
-    return v_menu
-
-def findMeal(menu, meal_id):
-	for meal in menu['meals']:
-         if meal['id'] == meal_id:
-             return meal
-
-def findIngredient(menu, ingredient):
-    for d_ingre in menu['ingredients']:
-        if d_ingre['name'] == ingredient:
-            return d_ingre
-    return -1
-
-def sendStatus(Handler, message, status):
-    Handler.send_response(status)
-    Handler.end_headers()
-    error_response = {
-		'error':{
-			'code': status,
-            'message': message.decode()
-		}
-	}
-    message = json.dumps(error_response, indent=2).encode()
-    Handler.wfile.write(message)
-
-def calculatePriceRandom(menu, meal_ingredients, quality):
-	price = 0
-	for ingredient in meal_ingredients:
-		data_ingredient = findIngredient(menu, ingredient['name'])
-		if data_ingredient == -1:
-			continue
-		price += (ingredient['quantity'] / 1000) * data_ingredient['options'][quality]['price']
-	return price
-
-def filteredHighestMenu(menu, budget):
-    meals = menu['meals']
-    highest_meals = []
-    for meal in meals:
-        price = calculatePriceRandom(menu, meal['ingredients'], 0)
-        if price <= budget:
-            highest_meals.append(meal)
-    return(highest_meals)
-
-def calculateQuality(Handler, f_meal, data):
-	quality_score = 0
-	for ingredients in f_meal['ingredients']:
-		if (ingredients['name'].lower() in data):
-			try:
-				quality_score += enums.QualityEnum[data[ingredients['name'].lower()]].value
-			except:
-				sendStatus(Handler, b'You can only choose from {high, medium, low}.', 400)
-				return -1
-		else:
-			quality_score += enums.QualityEnum['high'].value
-	return quality_score // len(f_meal['ingredients'])
+# is data empty
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -92,30 +19,29 @@ class Handler(BaseHTTPRequestHandler):
         if (parsed_path.path == '/listMeals'):
             is_vegetarian = query_params.get('is_vegetarian', ['false'])[0].lower() == 'true'
             is_vegan = query_params.get('is_vegan', ['false'])[0].lower() == 'true'
+            data_ingredients = menu['ingredients']
             filtered_menu = menu['meals']
-            ingre = menu['ingredients']
+
             if (is_vegetarian or is_vegan):
-                filtered_menu = getMenu(filtered_menu, ingre, is_vegan)
+                filtered_menu = functions.getMenu(menu, is_vegan)
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(sorted(filtered_menu, key=lambda x: x['name']), indent=2).encode()) # checkl
-            
+
         elif (parsed_path.path == '/getMeal'):
             length = len(menu['meals'])
             meal_id = int(query_params.get('id', [-1])[0])
-            if (meal_id <= 0 or meal_id > length):
-                sendStatus(self, b'Invalid ID provided. Please provide a valid ID. 1-' + str(length).encode(), 400)
-                return
-            ingre = menu['ingredients']
+            data_ingredients = menu['ingredients']
             selected_meal = []
 
-            selected_meal.append(findMeal(menu, meal_id))
-            for ingredient in ingre:
-                exists_ingrdts_it = next((ing for ing in selected_meal[0]['ingredients'] if ing['name'] == ingredient['name']), None)
-                if (exists_ingrdts_it):
-                    exists_ingrdts_it.update(ingredient)
+            if (meal_id <= 0 or meal_id > length):
+                functions.sendStatus(self, f'Invalid ID provided. Please provide a valid ID. [1-{str(length)}]', 400)
+                return
+
+            selected_meal.append(functions.findMeal(menu, meal_id))
+            functions.updateIngredient(data_ingredients, selected_meal)
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -123,7 +49,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(selected_meal, indent=2).encode())
 
         else:
-            sendStatus(self, b'Path not found.', 404)
+            functions.sendStatus(self, f'Path not found: {parsed_path.path}', 404)
 
     def do_POST(self):
         menu = read_menu('data.json')
@@ -138,12 +64,11 @@ class Handler(BaseHTTPRequestHandler):
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
 
             if (meal_id <= 0 or meal_id > meals_length):
-                sendStatus(self, b'Invalid ID provided. Please provide a valid meal ID. 1-' + \
-                           		str(meals_length).encode(), 400)
+                functions.sendStatus(self, f'Invalid ID provided. Please provide a valid meal ID. [1-{str(meals_length)}]', 400)
                 return
 
-            f_meal = findMeal(menu, meal_id)
-            quality_score = calculateQuality(self, f_meal, post_params)
+            f_meal = functions.findMeal(menu, meal_id)
+            quality_score = functions.calculateQuality(self, f_meal, post_params)
             if (quality_score == -1):
                 return
 
@@ -153,21 +78,15 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"quality": quality_score}, indent=2).encode())
 
         elif (parsed_path.path == '/price'):
-            price = 0;
             meal_id = int(parsed_data.get('meal_id', [-1])[0])
-            f_meal = findMeal(menu, meal_id)
-            for ingredients in f_meal['ingredients']:
-                data_ingredient = findIngredient(menu, ingredients['name'])
-                if (data_ingredient == -1):
-                    sendStatus(self, b'Ingredient information could not be found. ' + ingredients['name'].encode(), 404)
-                    return
-                if (ingredients['name'].lower() in post_params and \
-                    				post_params[ingredients['name'].lower()] in enums.QualityEnum.__members__):
-                    for options in data_ingredient['options']:
-                        if (options['quality'] == post_params[ingredients['name'].lower()]):
-                            price += (ingredients['quantity'] / 1000) * options['price'] + enums.serviceFee[options['quality']].value
-                else:
-                    price += (ingredients['quantity'] / 1000) * data_ingredient['options'][0]['price']
+            finded_meal = functions.findMeal(menu, meal_id)
+            
+            if (meal_id <= 0 or meal_id > meals_length):
+                functions.sendStatus(self, f'Invalid ID provided. Please provide a valid meal ID. [1-{str(meals_length)}]', 400)
+                return
+            price = functions.calculatePrice(self, menu, finded_meal, post_params)
+            if (price == -1):
+                return
 
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
@@ -175,23 +94,29 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"price": price}, indent=2).encode())
         
         elif (parsed_path.path == '/random'):
-            budget = int(parsed_data.get('budget', [-1])[0])
-            if budget > 0:
-                random_menu = filteredHighestMenu(menu, budget)
+            budget = float(parsed_data.get('budget', [-1])[0])
+            minimum_budget = functions.minBudget(menu)
+            print(minimum_budget)
+            if budget >= minimum_budget:
+                random_menu = functions.filteredHighestMenu(menu, budget)
+            elif budget < minimum_budget:
+                functions.sendStatus(self, 'minimum budget is: ' + str(minimum_budget), 400)
+                return
             else:
                 random_menu = menu['meals']
+
             random_meal = random.choice(random_menu)
             random_quality = 0
             random_ingredients = []
-            
             price = 0
+
             for ingredient in random_meal['ingredients']:
-                data_ingredient = findIngredient(menu, ingredient['name'])
+                data_ingredient = functions.findIngredient(menu, ingredient['name'])
                 if (data_ingredient == -1):
-                    sendStatus(self, b'Ingredient information could not be found. ' + ingredient['name'].encode(), 404)
+                    functions.sendStatus(self, 'Ingredient information could not be found: ' + ingredient['name'], 404)
                     return
                 random_option = random.choice(data_ingredient['options'])
-                random_ingredients.append(ingredientsJson(data_ingredient['name'], random_option))
+                random_ingredients.append(functions.ingredientsJson(data_ingredient['name'], random_option))
                 price += (ingredient['quantity'] / 1000) * random_option['price'] + enums.serviceFee[random_option['quality']].value
                 random_quality += enums.QualityEnum[random_option['quality']].value
                 print(random_option)
@@ -203,19 +128,13 @@ class Handler(BaseHTTPRequestHandler):
 				'quality_score': quality_score,
 				'ingredients': random_ingredients
 			}
+
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(result, indent=2).encode())
         else:
-            sendStatus(self, b'Path not found.', 404)
-
-def ingredientsJson(name, option):
-    ingredient = {
-		'name': name,
-		'quality': option['quality']
-	}
-    return ingredient
+            functions.sendStatus(self, f'Path not found: {parsed_path.path}', 404)
 
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
