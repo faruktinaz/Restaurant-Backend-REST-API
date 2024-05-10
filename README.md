@@ -24,7 +24,7 @@ python rest_api.py
 ```
 $ python3 rest_api.py
 ```
-![otsimotask](https://github.com/faruktinaz/Omer-Faruk-Genc-otsimo-internship-task-2024/assets/114104599/6e25edff-478a-458b-a070-fd4b18c46cc1)
+![otsimotask2](https://github.com/faruktinaz/Omer-Faruk-Genc-otsimo-internship-task-2024/assets/114104599/f04fe2bf-e337-4ef3-8625-e501e007e3fd)
 
 ---
 
