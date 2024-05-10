@@ -8,8 +8,6 @@ import functions
 HOST = "localhost"
 PORT = 8080
 
-# is data empty
-
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
@@ -136,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
                 random_ingredients.append(functions.ingredientsJson(data_ingredient['name'], random_option))
                 price += (ingredient['quantity'] / 1000) * random_option['price'] + enums.serviceFee[random_option['quality']].value
                 random_quality += enums.QualityEnum[random_option['quality']].value
-                print(random_option)
+
             quality_score = random_quality // len(random_meal['ingredients'])
             result = {
 				'id': random_meal['id'],
@@ -155,7 +153,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def runServer():
     server = HTTPServer((HOST, PORT), Handler)
-    print(f"localhost / port = {PORT}")
+    print(f"Server running on http://{HOST}:{PORT}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -165,7 +163,7 @@ def read_menu(path):
      with open(path, "r") as file:
         try:
             json_file = json.load(file)
-            return json.load(json_file)
+            return json_file
         except:
             print('Failed to load the JSON file')
             return -1
