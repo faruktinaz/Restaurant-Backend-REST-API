@@ -13,6 +13,9 @@ PORT = 8080
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         menu = read_menu('data.json')
+        if (menu == -1):
+            functions.sendStatus(self, 'Failed to load the JSON file', 500)
+            return
         parsed_path = urlparse(self.path)
         query_params = parse_qs(parsed_path.query)
 
@@ -32,7 +35,11 @@ class Handler(BaseHTTPRequestHandler):
 
         elif (parsed_path.path == '/getMeal'):
             length = len(menu['meals'])
-            meal_id = int(query_params.get('id', [-1])[0])
+            try:            
+                meal_id = int(query_params.get('id', [-1])[0])
+            except:
+                functions.sendStatus(self, 'ID must be integer.', 400)
+                return
             data_ingredients = menu['ingredients']
             selected_meal = []
 
@@ -53,6 +60,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         menu = read_menu('data.json')
+        if (menu == -1):
+            functions.sendStatus(self, 'Failed to load the JSON file', 500)
+            return
         content_length = int(self.headers['Content-Length'])
         parsed_path = urlparse(self.path)
         meals_length = len(menu['meals'])
@@ -61,7 +71,11 @@ class Handler(BaseHTTPRequestHandler):
         post_params = {key.lower(): value[0] for key, value in parsed_data.items()}
         
         if (parsed_path.path == '/quality'):
-            meal_id = int(parsed_data.get('meal_id', [-1])[0])
+            try:
+                meal_id = int(parsed_data.get('meal_id', [-1])[0])
+            except:
+                functions.sendStatus(self, 'ID must be integer.', 400)
+                return
 
             if (meal_id <= 0 or meal_id > meals_length):
                 functions.sendStatus(self, f'Invalid ID provided. Please provide a valid meal ID. [1-{str(meals_length)}]', 400)
@@ -78,12 +92,16 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"quality": quality_score}, indent=2).encode())
 
         elif (parsed_path.path == '/price'):
-            meal_id = int(parsed_data.get('meal_id', [-1])[0])
-            finded_meal = functions.findMeal(menu, meal_id)
-            
+            try:
+                meal_id = int(parsed_data.get('meal_id', [-1])[0])
+            except:
+                functions.sendStatus(self, 'ID must be integer.', 400)
+                return
             if (meal_id <= 0 or meal_id > meals_length):
                 functions.sendStatus(self, f'Invalid ID provided. Please provide a valid meal ID. [1-{str(meals_length)}]', 400)
                 return
+
+            finded_meal = functions.findMeal(menu, meal_id)
             price = functions.calculatePrice(self, menu, finded_meal, post_params)
             if (price == -1):
                 return
@@ -96,7 +114,6 @@ class Handler(BaseHTTPRequestHandler):
         elif (parsed_path.path == '/random'):
             budget = float(parsed_data.get('budget', [-1])[0])
             minimum_budget = functions.minBudget(menu)
-            print(minimum_budget)
             if budget >= minimum_budget:
                 random_menu = functions.filteredHighestMenu(menu, budget)
             elif budget < minimum_budget:
@@ -146,7 +163,12 @@ def runServer():
 
 def read_menu(path):
      with open(path, "r") as file:
-          return json.load(file)
+        try:
+            json_file = json.load(file)
+            return json.load(json_file)
+        except:
+            print('Failed to load the JSON file')
+            return -1
 
 if __name__ == "__main__":
 	runServer()
