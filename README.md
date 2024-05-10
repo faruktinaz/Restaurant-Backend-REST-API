@@ -1,4 +1,4 @@
-# otsimo-2024
+# Omer-Faruk-Genc-otsimo-internship-task-2024
 ## Transparent Restaurant Backend
 
 Verilen data setinde meal_id'si 5 olan yemeğin içerisindeki 'Pork chops' malzemesi, Malzemelerin bilgilerini içeren data['ingredients']'in içerisinde bulunmuyor. 
