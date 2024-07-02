@@ -1,31 +1,6 @@
-# Omer-Faruk-Genc-otsimo-internship-task-2024
-## Transparent Restaurant Backend
-
-Verilen data setinde meal_id'si 5 olan yemeğin içerisindeki 'Pork chops' malzemesi, Malzemelerin bilgilerini içeren data['ingredients']'in içerisinde bulunmuyor. 
-
-Bu durumun hatalı olup olmadığından emin değilim. Yine de bu durumu kontrol edip 'pork chops' un bilgilerine erişilmeye çalışıldığına hata durumu döndürdüm. 
+## Transparent Restaurant Backend REST API
 
 Anlatırken kullandigim Kod blokları kodun güncel halini temsil etmeyebilir.
-
-Değerlendirme için şimdiden teşekkür ederim.
-### How to run
-
-##### Windows
-* Python yüklü değilse, [Python'un resmi web sitesinden](https://www.python.org/downloads/) Python'u indirin ve yükleyin.
-* Github Reposunu indirelim veya klonlayalım.
-* cmd veya powershell kullanarak projenin dizinine gidelim. Ardından çalıştırabilmek için 
-```
-python rest_api.py
-```
-
-##### Linux
-* Git clone atarak projeyi çektikten sonra, Terminal açıp projenin dizinine gidelim
-* Python kodunu çalıştırmak için 'python3' kullanabiliriz
-```
-$ python3 rest_api.py
-```
-
-![otsimotask3](https://github.com/faruktinaz/Omer-Faruk-Genc-otsimo-internship-task-2024/assets/114104599/57b49491-809d-4b40-9ddd-7f43294bf684)
 
 ---
 
