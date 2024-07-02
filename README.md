@@ -19,7 +19,8 @@ Yemeğin içindeki malzemelerin her birini, `menu['ingredients']` içindeki öğ
 
 Kontrolleri ve koşul durumları doğru ise `vegatarian_menu.append()` kullanarak menüye ekleyip son durumda filtered_menu'yu `getMenu()` fonksiyonundan dönen menüye eşitledim.
 
-![image](https://github.com/faruktinaz/otsimo-2024/assets/114104599/1d4ea13f-847c-4b2c-8dee-7c641f870f41)
+![Screenshot from 2024-05-07 12-48-43](https://github.com/faruktinaz/Restaurant-Backend-REST-API/assets/114104599/e26c0e99-2279-4ff4-bee6-152badf030f6)
+
 
 ---
 
