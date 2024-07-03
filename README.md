@@ -1,7 +1,5 @@
 ## Transparent Restaurant Backend REST API
 
-Anlatırken kullandigim Kod blokları kodun güncel halini temsil etmeyebilir.
-
 ---
 
 ### List Meals
